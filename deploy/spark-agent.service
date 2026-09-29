@@ -7,12 +7,31 @@ Wants=network-online.target
 ExecStart=/usr/local/bin/spark-agent --addr :9105 --interval 2s
 Restart=always
 RestartSec=2
-# nvidia-smi and sysfs/procfs reads need broad access; keep the hardening
-# light so device access survives (this mirrors how node exporters run).
-User=root
+
+# Sandboxed and unprivileged (the agent needs no root: /proc, /sys and the
+# NVIDIA device nodes are world-readable on DGX OS). If you prefer a fixed
+# identity, replace DynamicUser with a dedicated system user.
+DynamicUser=yes
+SupplementaryGroups=video
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+UMask=0027
+
 StandardOutput=journal
 StandardError=journal
 

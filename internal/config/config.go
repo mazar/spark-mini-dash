@@ -73,8 +73,10 @@ func Defaults() *Config {
 			SocTempWarnC:     95,
 			SocTempSeriousC:  105,
 			SocTempCriticalC: 115,
-			MemWarnPct:       85,
-			MemCritPct:       95,
+			// Unified-memory "used" includes reclaimable cache, so a healthy
+			// GB10 idles near ~96%: only flag genuine near-OOM pressure.
+			MemWarnPct: 97,
+			MemCritPct: 99,
 		},
 		Nodes: []NodeCfg{{URL: "http://127.0.0.1:9105"}}, // default: local agent
 	}

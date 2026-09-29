@@ -7,10 +7,33 @@ Wants=network-online.target
 ExecStart=/usr/bin/spark-agent --addr :9105 --interval 2s
 Restart=always
 RestartSec=2
-User=root
+
+# Unprivileged + sandboxed. The agent only reads /proc, /sys and execs
+# nvidia-smi (the NVIDIA device nodes are world-accessible on DGX OS), so
+# root is unnecessary. DynamicUser gives it a fresh transient identity on
+# every start. If your site needs to relax something, use a drop-in:
+#   systemctl edit spark-agent  ->  [Service] <setting>=...
+DynamicUser=yes
+SupplementaryGroups=video
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+UMask=0027
+
 StandardOutput=journal
 StandardError=journal
 
