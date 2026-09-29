@@ -1,0 +1,10 @@
+#!/bin/sh
+# Disable @UNIT@ on purge (remove leaves enablement state alone).
+set -e
+
+if [ "$1" = purge ]; then
+    systemctl disable @UNIT@ >/dev/null 2>&1 || true
+    systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+
+exit 0

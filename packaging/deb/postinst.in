@@ -1,0 +1,15 @@
+#!/bin/sh
+# Enable and start @UNIT@ after install or upgrade.
+set -e
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload || true
+    systemctl enable @UNIT@ >/dev/null 2>&1 || true
+    deb-systemd-invoke try-restart @UNIT@ >/dev/null 2>&1 || true
+    deb-systemd-invoke start @UNIT@ >/dev/null 2>&1 || true
+else
+    # Offline install (chroot / image build): enable for next boot.
+    systemctl enable @UNIT@ >/dev/null 2>&1 || true
+fi
+
+exit 0

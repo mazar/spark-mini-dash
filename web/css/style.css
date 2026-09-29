@@ -1,0 +1,216 @@
+/* spark-mini-dash — dark wall dashboard, 1920x480.
+   Design tokens (dataviz-validated on the dark surface). */
+
+:root {
+  --page: #0a0a0a;
+  --surface: #141414;        /* node card */
+  --ink: #ffffff;            /* primary text */
+  --ink-2: #c3c2b7;          /* secondary text */
+  --muted: #898781;          /* labels, captions */
+  --line: rgba(255, 255, 255, 0.08);  /* hairline borders */
+  --track: #262624;          /* empty meter/heatmap track */
+  --good: #0ca30c;           /* status only — never a node hue */
+  --warn: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --nvidia: #76b900;         /* online pill */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  overflow: hidden;
+  font: 400 14px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  height: 100vh;
+  padding: 8px 12px 12px;
+  transition: opacity .4s;
+}
+
+body.stale-view { opacity: .55; }
+
+/* ---------- header ---------- */
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 6px;
+}
+
+header h1 { font-size: 20px; font-weight: 600; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(118, 185, 0, .16);
+  color: var(--nvidia);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 5px 14px;
+  border-radius: 999px;
+}
+
+.pill svg { width: 10px; height: 10px; fill: currentColor; }
+
+.pill.zero { background: rgba(208, 59, 59, .16); color: var(--critical); }
+
+.meta {
+  margin-left: auto;
+  display: flex;
+  gap: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums; /* ticking clock aligns */
+}
+
+/* ---------- node rows ---------- */
+
+#cards {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+}
+
+.node {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 24px 16px;
+  display: grid;
+  grid-template-columns: 290fr 300fr 380fr 300fr 210fr 150fr;
+  gap: 30px;
+  align-items: start;
+  min-height: 0;
+  min-width: 0;
+  transition: opacity .5s;
+}
+
+.node.dim { opacity: .5; }
+
+/* left zone: name, status chip, per-core heatmap */
+
+.name {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .09em;
+}
+
+.chip svg { width: 10px; height: 10px; fill: currentColor; flex: none; }
+
+.chip.ok   { color: var(--good); }
+.chip.warn { color: var(--warn); }
+.chip.crit { color: var(--critical); }
+
+.heatmap {
+  display: flex;
+  gap: 2px;
+  margin-top: 13px;
+  flex-wrap: wrap;
+}
+
+.cell { width: 13px; height: 13px; border-radius: 3px; background: var(--track); }
+.cell.h1 { background: color-mix(in srgb, var(--hue) 25%, var(--surface)); }
+.cell.h2 { background: color-mix(in srgb, var(--hue) 50%, var(--surface)); }
+.cell.h3 { background: color-mix(in srgb, var(--hue) 75%, var(--surface)); }
+.cell.h4 { background: var(--hue); }
+
+/* metric columns */
+
+.metric { min-width: 0; }
+
+.lbl {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  color: var(--muted);
+}
+
+.val {
+  font-size: 27px;
+  font-weight: 600;
+  margin-top: 7px;
+  white-space: nowrap;
+}
+
+.val.sev-warn     { color: var(--warn); }
+.val.sev-serious  { color: var(--serious); }
+.val.sev-critical { color: var(--critical); }
+
+.bar {
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--hue) 24%, var(--surface));
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 5px;
+  background: var(--hue);
+  transition: width .8s ease;
+}
+
+.cap {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.sub.sev-warn     { color: var(--warn); }
+.sub.sev-serious  { color: var(--serious); }
+.sub.sev-critical { color: var(--critical); }
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-top: 9px;
+}
+
+.spark .line {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.spark .dot {
+  fill: var(--hue);
+  stroke: var(--surface);
+  stroke-width: 2;
+}

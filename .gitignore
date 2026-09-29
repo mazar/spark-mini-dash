@@ -1,0 +1,6 @@
+dist/
+*.test
+*.out
+
+# local design reference (NVIDIA Sync screenshot), not part of the app
+resource-monitor.png

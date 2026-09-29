@@ -1,0 +1,11 @@
+Package: spark-agent
+Version: @VERSION@
+Architecture: @ARCH@
+Maintainer: Massoud Mazar <massoud@localhost>
+Depends: systemd
+Section: net
+Priority: optional
+Description: Per-node metrics agent for spark-mini-dash
+ Collects CPU, unified memory, GPU and thermal telemetry on this machine
+ and serves it as JSON on :9105/metrics for the spark-mini-dash
+ dashboard. Runs as a systemd service, enabled and started on install.

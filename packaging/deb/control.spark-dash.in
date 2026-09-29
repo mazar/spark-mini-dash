@@ -1,0 +1,13 @@
+Package: spark-dash
+Version: @VERSION@
+Architecture: @ARCH@
+Maintainer: Massoud Mazar <massoud@localhost>
+Depends: systemd
+Section: net
+Priority: optional
+Description: Cluster dashboard for DGX Spark machines (spark-mini-dash)
+ Polls spark-agent endpoints across a DGX Spark cluster and serves the
+ 1920x480 wall dashboard plus /api/state on :8080. Runs as a systemd
+ service, enabled and started on install. Edit
+ /etc/spark-mini-dash/config.json to list the nodes, then
+ "systemctl restart spark-dash".

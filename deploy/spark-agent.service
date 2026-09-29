@@ -1,0 +1,20 @@
+[Unit]
+Description=Spark Mini Dash agent (per-node resource metrics)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/spark-agent --addr :9105 --interval 2s
+Restart=always
+RestartSec=2
+# nvidia-smi and sysfs/procfs reads need broad access; keep the hardening
+# light so device access survives (this mirrors how node exporters run).
+User=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

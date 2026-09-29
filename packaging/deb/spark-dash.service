@@ -1,0 +1,18 @@
+[Unit]
+Description=Spark Mini Dash dashboard (cluster poller + web UI)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/spark-dash --config /etc/spark-mini-dash/config.json
+Restart=always
+RestartSec=2
+User=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

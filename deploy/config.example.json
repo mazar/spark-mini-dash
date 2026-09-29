@@ -1,0 +1,22 @@
+{
+  "poll_interval_ms": 2000,
+  "timeout_ms": 1500,
+  "history_len": 300,
+  "stale_after_s": 3,
+  "offline_after_s": 15,
+  "soc_label": "SoC",
+  "thresholds": {
+    "gpu_temp_warn_c": 80,
+    "gpu_temp_serious_c": 90,
+    "gpu_temp_critical_c": 100,
+    "soc_temp_warn_c": 95,
+    "soc_temp_serious_c": 105,
+    "soc_temp_critical_c": 115,
+    "mem_warn_pct": 85,
+    "mem_crit_pct": 95
+  },
+  "nodes": [
+    { "name": "spark-5a4e", "url": "http://10.0.0.11:9105" },
+    { "name": "spark-8a27", "url": "http://10.0.0.12:9105" }
+  ]
+}

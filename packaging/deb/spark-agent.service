@@ -1,0 +1,18 @@
+[Unit]
+Description=Spark Mini Dash agent (per-node resource metrics)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/spark-agent --addr :9105 --interval 2s
+Restart=always
+RestartSec=2
+User=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
