@@ -2,8 +2,8 @@
    Design tokens (dataviz-validated on the dark surface). */
 
 :root {
-  --page: #0a0a0a;
-  --surface: #141414;        /* node card */
+  --page: #000000;
+  --surface: #000000;        /* node card — pure black, separated by hairline only */
   --ink: #ffffff;            /* primary text */
   --ink-2: #c3c2b7;          /* secondary text */
   --muted: #898781;          /* labels, captions */
@@ -174,8 +174,13 @@ header h1 { font-size: 20px; font-weight: 600; }
   transition: width .8s ease;
 }
 
+/* near-exhaustion tint for the memory bar (value text stays white) */
+.bar i.sev-warn     { background: var(--warn); }
+.bar i.sev-serious  { background: var(--serious); }
+.bar i.sev-critical { background: var(--critical); }
+
 .cap {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 9px;
   white-space: nowrap;
@@ -184,7 +189,7 @@ header h1 { font-size: 20px; font-weight: 600; }
 }
 
 .sub {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-2);
   margin-top: 3px;
   white-space: nowrap;

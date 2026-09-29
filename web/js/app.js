@@ -162,7 +162,10 @@ function render(s) {
     const perCore = (cpu && cpu.per_core_pct) || [];
     r.cells.forEach((c, i) => c.className = "cell " + binClass(perCore[i]));
 
-    // MEMORY (unified pool; decimal GB captions like Sync)
+    // MEMORY (unified pool; decimal GB captions like Sync). The big value
+    // stays white on purpose: used = total − available counts reclaimable
+    // cache, so a healthy GB10 idles at ~96% and the number is
+    // informational. Only the bar tints past the (high) thresholds.
     r.memVal.textContent = fmtPct(mem && mem.used_pct);
     setBar(r.memBar, mem && mem.used_pct);
     if (mem && mem.total_kib != null) {
@@ -172,7 +175,7 @@ function render(s) {
     } else {
       r.memCap.textContent = "n/a";
     }
-    r.memVal.className = "val " + sevClass(mem && mem.used_pct, th.mem_warn_pct, th.mem_warn_pct, th.mem_crit_pct);
+    r.memBar.className = sevClass(mem && mem.used_pct, th.mem_warn_pct, th.mem_warn_pct, th.mem_crit_pct);
 
     // GPU
     r.gpuVal.textContent = fmtPct(gpu && gpu.util_pct);

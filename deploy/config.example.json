@@ -12,8 +12,8 @@
     "soc_temp_warn_c": 95,
     "soc_temp_serious_c": 105,
     "soc_temp_critical_c": 115,
-    "mem_warn_pct": 85,
-    "mem_crit_pct": 95
+    "mem_warn_pct": 97,
+    "mem_crit_pct": 99
   },
   "nodes": [
     { "name": "spark-5a4e", "url": "http://10.0.0.11:9105" },

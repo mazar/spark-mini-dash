@@ -7,10 +7,30 @@ Wants=network-online.target
 ExecStart=/usr/bin/spark-dash --config /etc/spark-mini-dash/config.json
 Restart=always
 RestartSec=2
-User=root
+
+# Unprivileged + sandboxed: the dashboard only reads its config, polls the
+# agents over HTTP and serves the embedded UI on :8080. Root is unnecessary.
+# Relax anything via a drop-in:  systemctl edit spark-dash
+DynamicUser=yes
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+UMask=0027
+
 StandardOutput=journal
 StandardError=journal
 
