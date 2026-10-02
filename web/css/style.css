@@ -1,14 +1,15 @@
-/* spark-mini-dash — dark wall dashboard, 1920x480.
-   Design tokens (dataviz-validated on the dark surface). */
+/* spark-mini-dash — cockpit cluster: one instrument panel per node.
+   Design tokens (dataviz-validated on the dark surface #1a1a19). */
 
 :root {
-  --page: #000000;
-  --surface: #000000;        /* node card — pure black, separated by hairline only */
+  --page: #0d0d0d;           /* page plane */
+  --surface: #1a1a19;        /* panel surface */
+  --raise: #242423;          /* tooltip / raised chip */
   --ink: #ffffff;            /* primary text */
   --ink-2: #c3c2b7;          /* secondary text */
   --muted: #898781;          /* labels, captions */
-  --line: rgba(255, 255, 255, 0.08);  /* hairline borders */
-  --track: #262624;          /* empty meter/heatmap track */
+  --line: rgba(255, 255, 255, 0.10);  /* hairline borders */
+  --grid: #2c2c2a;           /* hairline rules inside plots */
   --good: #0ca30c;           /* status only — never a node hue */
   --warn: #fab219;
   --serious: #ec835a;
@@ -17,6 +18,10 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* the app toggles `hidden` on grid containers; ID display rules would
+   otherwise beat the UA's [hidden] rule */
+[hidden] { display: none !important; }
 
 html, body { height: 100%; }
 
@@ -29,7 +34,7 @@ body {
   display: grid;
   grid-template-rows: 48px 1fr;
   height: 100vh;
-  padding: 8px 12px 12px;
+  padding: 8px 16px 14px;
   transition: opacity .4s;
 }
 
@@ -65,40 +70,70 @@ header h1 { font-size: 20px; font-weight: 600; }
 .meta {
   margin-left: auto;
   display: flex;
+  align-items: center;
   gap: 20px;
   color: var(--muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums; /* ticking clock aligns */
 }
 
-/* ---------- node rows ---------- */
+#view-toggle {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink-2);
+  font: 600 12px/1 system-ui, sans-serif;
+  padding: 5px 10px;
+  cursor: pointer;
+}
 
-#cards {
+#view-toggle:hover { border-color: var(--muted); }
+#view-toggle[aria-pressed="true"] { background: var(--raise); color: var(--ink); }
+
+#view-toggle kbd {
+  font: 500 11px/1 system-ui, sans-serif;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-left: 2px;
+}
+
+/* ---------- panels: one instrument cluster per node, side by side ---------- */
+
+#panels {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   min-height: 0;
 }
 
-.node {
+.panel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 18px 24px 16px;
+  border-left: 3px solid var(--hue, #3987e5);
+  border-radius: 12px;
+  padding: 14px 20px 12px;
   display: grid;
-  grid-template-columns: 290fr 300fr 380fr 300fr 210fr 150fr;
-  gap: 30px;
-  align-items: start;
-  min-height: 0;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
   min-width: 0;
+  min-height: 0;
   transition: opacity .5s;
 }
 
-.node.dim { opacity: .5; }
+.panel.dim { opacity: .5; }
 
-/* left zone: name, status chip, per-core heatmap */
+/* identity strip: name, status chip, uptime */
+
+.idrow {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
+}
 
 .name {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 600;
   letter-spacing: .01em;
   white-space: nowrap;
@@ -110,10 +145,10 @@ header h1 { font-size: 20px; font-weight: 600; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 7px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .09em;
+  white-space: nowrap;
 }
 
 .chip svg { width: 10px; height: 10px; fill: currentColor; flex: none; }
@@ -122,100 +157,306 @@ header h1 { font-size: 20px; font-weight: 600; }
 .chip.warn { color: var(--warn); }
 .chip.crit { color: var(--critical); }
 
-.heatmap {
+.uptime { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+/* gauge row: CPU (turbine) · GPU hero · MEM · thermo+power */
+
+.gaugerow {
   display: flex;
-  gap: 2px;
-  margin-top: 13px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 12px;
+  min-height: 0;
+  min-width: 0;
 }
 
-.cell { width: 13px; height: 13px; border-radius: 3px; background: var(--track); }
-.cell.h1 { background: color-mix(in srgb, var(--hue) 25%, var(--surface)); }
-.cell.h2 { background: color-mix(in srgb, var(--hue) 50%, var(--surface)); }
-.cell.h3 { background: color-mix(in srgb, var(--hue) 75%, var(--surface)); }
-.cell.h4 { background: var(--hue); }
+.gauge {
+  position: relative;
+  flex: 0 1 auto;
+  width: min(100%, 224px);
+  border-radius: 10px;
+}
 
-/* metric columns */
+.gauge.hero { width: min(100%, 252px); }
 
-.metric { min-width: 0; }
+.gauge svg { display: block; width: 100%; height: auto; }
 
-.lbl {
-  font-size: 12px;
+.gauge:focus-visible, .recorder:focus-visible, .thermo:focus-visible {
+  outline: 1px solid var(--muted);
+  outline-offset: 3px;
+}
+
+/* center readout, overlaid on the arc */
+
+.gcenter {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 22%;
+}
+
+.glabel {
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: .1em;
   color: var(--muted);
 }
 
-.val {
-  font-size: 27px;
+.gval {
+  font-size: 30px;
   font-weight: 600;
-  margin-top: 7px;
+  line-height: 1.1;
   white-space: nowrap;
 }
 
-.val.sev-warn     { color: var(--warn); }
-.val.sev-serious  { color: var(--serious); }
-.val.sev-critical { color: var(--critical); }
+.hero .gval { font-size: 42px; }
 
-.bar {
-  height: 10px;
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--hue) 24%, var(--surface));
-  margin-top: 10px;
-  overflow: hidden;
-}
-
-.bar i {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: 5px;
-  background: var(--hue);
-  transition: width .8s ease;
-}
-
-/* near-exhaustion tint for the memory bar (value text stays white) */
-.bar i.sev-warn     { background: var(--warn); }
-.bar i.sev-serious  { background: var(--serious); }
-.bar i.sev-critical { background: var(--critical); }
-
-.cap {
-  font-size: 13px;
+.gcap {
+  font-size: 12px;
   color: var(--muted);
-  margin-top: 9px;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sub {
-  font-size: 15px;
-  color: var(--ink-2);
-  margin-top: 3px;
+/* arcs — meter fill carries the node hue; the unfilled track is a lighter
+   step of the same ramp, so state reads across the whole arc */
+
+.arc-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--hue) 22%, var(--surface));
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.arc-val {
+  fill: none;
+  stroke: var(--hue);
+  stroke-width: 12;
+  stroke-linecap: round;
+  /* no transition on stroke-dasharray: interpolating dashes with round
+     caps flickers cap-dot artifacts at the arc ends */
+}
+
+.hero .arc-track, .hero .arc-val { stroke-width: 14; }
+
+.arc-val.sev-warn     { stroke: var(--warn); }
+.arc-val.sev-serious  { stroke: var(--serious); }
+.arc-val.sev-critical { stroke: var(--critical); }
+
+/* per-core turbine ring (CPU): radial ticks, length + shade encode load */
+
+.fan line { stroke-width: 5; stroke-linecap: round; }
+
+.fan .h1 { stroke: color-mix(in srgb, var(--hue) 25%, var(--surface)); }
+.fan .h2 { stroke: color-mix(in srgb, var(--hue) 50%, var(--surface)); }
+.fan .h3 { stroke: color-mix(in srgb, var(--hue) 75%, var(--surface)); }
+.fan .h4 { stroke: var(--hue); }
+
+.fan .hit { stroke: transparent; stroke-width: 18; pointer-events: stroke; }
+
+/* right column: thermometer + power */
+
+.side {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.side .lbl {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  color: var(--muted);
+}
+
+.side .val {
+  font-size: 26px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
+.side .sub { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+
+.side .cap { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+.val.sev-warn     { color: var(--warn); }
+.val.sev-serious  { color: var(--serious); }
+.val.sev-critical { color: var(--critical); }
 .sub.sev-warn     { color: var(--warn); }
 .sub.sev-serious  { color: var(--serious); }
 .sub.sev-critical { color: var(--critical); }
 
-.spark {
-  display: block;
-  width: 100%;
-  height: 34px;
-  margin-top: 9px;
+.thermo { position: relative; width: 15px; height: 110px; margin: 4px 0 2px 58px; }
+
+.thermo .track {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hue) 22%, var(--surface));
 }
 
-.spark .line {
+.thermo .mercury {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px;
+  background: var(--hue);
+  transition: height .8s ease;
+}
+
+.thermo .mercury.sev-warn     { background: var(--warn); }
+.thermo .mercury.sev-serious  { background: var(--serious); }
+.thermo .mercury.sev-critical { background: var(--critical); }
+
+.thermo .tick {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  height: 1px;
+  background: var(--raise);
+}
+
+.thermo .tick i {
+  position: absolute;
+  left: 22px;
+  top: -6px;
+  font: 500 11px/1 system-ui, sans-serif;
+  font-style: normal;
+  color: var(--muted);
+}
+
+.thermo .socmark {
+  position: absolute;
+  left: -9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  transform: translateY(-2px);
+}
+
+.thermo .socmark i {
+  position: absolute;
+  right: 10px;
+  top: -4px;
+  font: 500 12px/1 system-ui, sans-serif;
+  font-style: normal;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.thermo .socmark.sev-warn     { background: var(--warn); }
+.thermo .socmark.sev-serious  { background: var(--serious); }
+.thermo .socmark.sev-critical { background: var(--critical); }
+
+/* recorder strip: 10-minute small-multiple lanes, one per metric */
+
+.recorder { position: relative; min-width: 0; padding-top: 6px; }
+
+.recwrap { position: relative; }
+
+.recorder svg { display: block; width: 100%; height: 104px; }
+
+.recorder .baseline { stroke: var(--grid); stroke-width: 1; }
+
+.recorder .series {
   fill: none;
-  stroke: var(--muted);
+  stroke: var(--hue);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.spark .dot {
-  fill: var(--hue);
-  stroke: var(--surface);
-  stroke-width: 2;
+.recorder .cross {
+  stroke: var(--muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  visibility: hidden;
+}
+
+.lane-labels { position: absolute; inset: 0; pointer-events: none; }
+
+.lane-labels span {
+  position: absolute;
+  left: 10px;
+  transform: translateY(-50%);
+  font: 500 12px/1 system-ui, sans-serif;
+  color: var(--muted);
+  letter-spacing: .08em;
+}
+
+.rec-cap {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ---------- tooltip ---------- */
+
+#tooltip {
+  position: fixed;
+  z-index: 10;
+  max-width: 280px;
+  background: var(--raise);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  pointer-events: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
+}
+
+#tooltip .tt-title { color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+
+/* ---------- table view (the WCAG-clean twin; key T) ---------- */
+
+#tableview { overflow: auto; min-height: 0; grid-row: 2; }
+
+#tableview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+#tableview caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 2px 4px 10px;
+}
+
+#tableview th, #tableview td {
+  text-align: left;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--grid);
+  white-space: nowrap;
+}
+
+#tableview th {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  color: var(--muted);
+}
+
+#tableview td.num, #tableview th.num { text-align: right; }
+
+#tableview tbody tr:hover { background: var(--raise); }
+
+#tableview .chip { display: inline-flex; }
+
+@media (prefers-reduced-motion: reduce) {
+  .arc-val, .thermo .mercury { transition: none; }
 }

@@ -11,12 +11,24 @@
   <h1>Nodes</h1>
   <div id="online" class="pill" hidden><svg class="glyph" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4"/></svg><span id="online-text">…</span></div>
   <div class="meta">
+    <button id="view-toggle" type="button" aria-pressed="false" title="Toggle table view (T)">Table <kbd>T</kbd></button>
     <span id="clock"></span>
-    <span>poll 2s</span>
+    <span id="poll">poll …</span>
     <span id="stamp"></span>
   </div>
 </header>
-<main id="cards"></main>
+
+<main id="panels" aria-label="Node instrument panels"></main>
+
+<section id="tableview" hidden aria-label="Node table view">
+  <table>
+    <caption>Live node telemetry — same data as the panel view</caption>
+    <thead><tr id="tv-head"></tr></thead>
+    <tbody id="tv-body"></tbody>
+  </table>
+</section>
+
+<div id="tooltip" role="status" hidden></div>
 <script src="/js/app.js"></script>
 </body>
 </html>
