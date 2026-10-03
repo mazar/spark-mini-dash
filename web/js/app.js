@@ -3,15 +3,12 @@
 /* spark-mini-dash UI — vanilla JS, no build step.
    Cockpit-cluster layout: one instrument panel per node, side by side.
    Circular gauges (CPU with per-core turbine ring, GPU hero, memory),
-   a thermometer, power, and a 10-minute recorder strip. Polls /api/state. */
+   a thermometer, and power. Polls /api/state. */
 
 const $ = (sel, el = document) => el.querySelector(sel);
 
 const VB = 240, CX = 120, CY = 120;   // gauge viewBox
-const TEMP_LO = 20, TEMP_HI = 110;    // thermometer + temp lane scale
-const REC_W = 600, REC_LANES = 4, REC_LANE_H = 18, REC_GAP = 8;
-const REC_PAD_L = 64, REC_PAD_B = 8;  // label gutter / bottom breathing room
-const REC_H = REC_LANES * REC_LANE_H + (REC_LANES - 1) * REC_GAP + REC_PAD_B;
+const TEMP_LO = 20, TEMP_HI = 110;    // thermometer scale
 
 let panels = new Map(); // node index → DOM refs (config position is the only identity stable across polls)
 
@@ -188,47 +185,6 @@ function buildFan(g, cores) {
   }
 }
 
-function laneBottom(i) { return REC_LANE_H + i * (REC_LANE_H + REC_GAP); }
-
-// x for sample i of n: the plot starts after the label gutter
-function laneX(i, n) {
-  return REC_PAD_L + (i / (n - 1)) * (REC_W - REC_PAD_L);
-}
-
-function buildRecorder() {
-  const root = el(`<div class="recorder" tabindex="0">
-    <div class="recwrap">
-      <svg viewBox="0 0 ${REC_W} ${REC_H}" preserveAspectRatio="none" aria-hidden="true"></svg>
-      <div class="lane-labels"></div>
-    </div>
-    <div class="rec-cap">last 10 min</div>
-  </div>`);
-  const svg = $("svg", root);
-  const ns = "http://www.w3.org/2000/svg";
-  const refs = { root, svg, series: [], labels: [], cross: null };
-  for (let i = 0; i < REC_LANES; i++) {
-    const base = document.createElementNS(ns, "line");
-    base.setAttribute("class", "baseline");
-    base.setAttribute("x1", REC_PAD_L); base.setAttribute("x2", REC_W);
-    base.setAttribute("y1", laneBottom(i)); base.setAttribute("y2", laneBottom(i));
-    svg.appendChild(base);
-    const path = document.createElementNS(ns, "path");
-    path.setAttribute("class", "series");
-    svg.appendChild(path);
-    refs.series.push(path);
-    const lbl = el(`<span></span>`);
-    lbl.style.top = (laneBottom(i) - REC_LANE_H / 2) / REC_H * 100 + "%";
-    $(".lane-labels", root).appendChild(lbl);
-    refs.labels.push(lbl);
-  }
-  const cross = document.createElementNS(ns, "line");
-  cross.setAttribute("class", "cross");
-  cross.setAttribute("y1", 0); cross.setAttribute("y2", REC_H);
-  svg.appendChild(cross);
-  refs.cross = cross;
-  return refs;
-}
-
 function ensurePanel(node, idx) {
   let p = panels.get(idx);
   if (p) return p;
@@ -256,8 +212,6 @@ function ensurePanel(node, idx) {
   gaugerow.appendChild(side);
   root.appendChild(gaugerow);
 
-  const rec = buildRecorder();
-  root.appendChild(rec.root);
   $("#panels").appendChild(root);
 
   p = {
@@ -272,27 +226,10 @@ function ensurePanel(node, idx) {
     powerVal: $('[data-v="power"]', side),
     peakCap: $('[data-v="peak"]', side),
     thermo: $(".thermo", side),
-    rec,
   };
   // thermometer threshold ticks are config-driven; labels added in render (first pass)
   panels.set(idx, p);
   return p;
-}
-
-/* ---------- recorder drawing ---------- */
-
-function lanePath(values, lo, hi, lane) {
-  const n = values.length, bottom = laneBottom(lane);
-  if (n < 2) return "";
-  const y = v => bottom - Math.max(0, Math.min(1, (v - lo) / (hi - lo))) * REC_LANE_H;
-  let d = "", pen = false;
-  for (let i = 0; i < n; i++) {
-    const v = values[i];
-    if (v == null) { pen = false; continue; }
-    d += (pen ? "L" : "M") + laneX(i, n).toFixed(1) + " " + y(v).toFixed(1) + " ";
-    pen = true;
-  }
-  return d;
 }
 
 /* ---------- header (shared by both views) ---------- */
@@ -392,8 +329,6 @@ function render(s) {
     const peak = pw.reduce((m, v) => v != null && v > m ? v : m, 0);
     p.peakCap.textContent = pw.some(v => v != null) ? `peak ${Math.round(peak)}W` : "n/a";
 
-    drawRecorder(p, node.history);
-
     // hover/focus wiring is static except aria labels
     wirePanel(p, node, s, idx);
   });
@@ -430,20 +365,6 @@ function drawThermo(p, gt, soc, gtSev, socLabel, th) {
     socEl.querySelector("i").textContent = socLabel;
   }
   p.thermo.setAttribute("aria-label", `GPU temperature ${fmtTemp(gt)}`);
-}
-
-function drawRecorder(p, hist) {
-  const lanes = [
-    ["CPU", hist && hist.cpu_util_pct, 0, 100],
-    ["GPU", hist && hist.gpu_util_pct, 0, 100],
-    ["MEM", hist && hist.mem_used_pct, 0, 100],
-    ["°C",  hist && hist.gpu_temp_c, TEMP_LO, TEMP_HI],
-  ];
-  lanes.forEach(([label, values, lo, hi], i) => {
-    p.rec.series[i].setAttribute("d", lanePath(values || [], lo, hi, i));
-    p.rec.labels[i].textContent = label;
-  });
-  p.rec.data = lanes.map(l => l[1] || []);
 }
 
 /* ---------- hover wiring (idempotent per render) ---------- */
@@ -495,56 +416,6 @@ function wirePanel(p, node, s, idx) {
   });
   thermoEl.addEventListener("focus", focusTip(thermoEl));
   thermoEl.addEventListener("blur", hideTip);
-
-  // recorder: crosshair + values at the sample under the cursor
-  const recEl = p.rec.root;
-  recEl.addEventListener("mousemove", ev => {
-    const n = laneLen(p, 0); // all rings are pushed in lockstep by the store
-    if (n < 2) return;
-    const rect = recEl.getBoundingClientRect();
-    const xView = (ev.clientX - rect.left) / rect.width * REC_W;
-    const frac = Math.max(0, Math.min(1, (xView - REC_PAD_L) / (REC_W - REC_PAD_L)));
-    const i = Math.round(frac * (n - 1));
-    p.rec.hoverIdx = i;
-    const x = laneX(i, n);
-    p.rec.cross.setAttribute("x1", x); p.rec.cross.setAttribute("x2", x);
-    p.rec.cross.style.visibility = "visible";
-    showTip(recTipHTML(p, i), ev.clientX, ev.clientY);
-  });
-  recEl.addEventListener("mouseleave", () => {
-    p.rec.cross.style.visibility = "hidden";
-    p.rec.hoverIdx = null;
-    hideTip();
-  });
-  recEl.addEventListener("focus", () => {
-    const n = laneLen(p, 0);
-    if (n >= 2) {
-      p.rec.hoverIdx = n - 1;
-      showTip(recTipHTML(p, n - 1), recEl.getBoundingClientRect().right, recEl.getBoundingClientRect().top);
-    }
-  });
-  recEl.addEventListener("blur", () => { p.rec.cross.style.visibility = "hidden"; hideTip(); });
-  recEl.addEventListener("blur", () => { p.rec.cross.style.visibility = "hidden"; hideTip(); });
-}
-
-function laneLen(p, i) {
-  return laneValues(p)[i].length;
-}
-
-// lane data cached on the recorder during drawRecorder
-function laneValues(p) {
-  return p.rec.data || [[], [], [], []];
-}
-
-function recTipHTML(p, i) {
-  const vals = laneValues(p);
-  const pollS = (p.wired ? p.wired.state.config.poll_interval_ms : 2000) / 1000;
-  const ago = Math.round((vals[0].length - 1 - i) * pollS);
-  const when = ago <= 0 ? "now" : ago < 60 ? ago + "s ago" : Math.round(ago / 60) + "m ago";
-  const line = (name, v, unit) => `${name} ${v == null ? "—" : Math.round(v) + unit}`;
-  return `<div class='tt-title'>${when}</div>` +
-    [line("CPU", vals[0][i], "%"), line("GPU", vals[1][i], "%"),
-     line("MEM", vals[2][i], "%"), line("", vals[3][i], "°C")].join(" · ");
 }
 
 /* ---------- table view ---------- */

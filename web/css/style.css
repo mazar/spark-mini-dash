@@ -29,7 +29,7 @@ body {
   background: var(--page);
   color: var(--ink);
   overflow: hidden;
-  font: 400 14px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 400 16px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   display: grid;
   grid-template-rows: 48px 1fr;
@@ -49,7 +49,7 @@ header {
   padding: 0 6px;
 }
 
-header h1 { font-size: 20px; font-weight: 600; }
+header h1 { font-size: 22px; font-weight: 600; }
 
 .pill {
   display: inline-flex;
@@ -58,7 +58,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   background: rgba(118, 185, 0, .16);
   color: var(--nvidia);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 15px;
   padding: 5px 14px;
   border-radius: 999px;
 }
@@ -73,7 +73,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   align-items: center;
   gap: 20px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums; /* ticking clock aligns */
 }
 
@@ -82,7 +82,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--ink-2);
-  font: 600 12px/1 system-ui, sans-serif;
+  font: 600 14px/1 system-ui, sans-serif;
   padding: 5px 10px;
   cursor: pointer;
 }
@@ -91,7 +91,7 @@ header h1 { font-size: 20px; font-weight: 600; }
 #view-toggle[aria-pressed="true"] { background: var(--raise); color: var(--ink); }
 
 #view-toggle kbd {
-  font: 500 11px/1 system-ui, sans-serif;
+  font: 500 13px/1 system-ui, sans-serif;
   color: var(--muted);
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -114,7 +114,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   border-radius: 12px;
   padding: 14px 20px 12px;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   gap: 10px;
   min-width: 0;
   min-height: 0;
@@ -133,7 +133,7 @@ header h1 { font-size: 20px; font-weight: 600; }
 }
 
 .name {
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 600;
   letter-spacing: .01em;
   white-space: nowrap;
@@ -145,7 +145,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: .09em;
   white-space: nowrap;
@@ -157,7 +157,7 @@ header h1 { font-size: 20px; font-weight: 600; }
 .chip.warn { color: var(--warn); }
 .chip.crit { color: var(--critical); }
 
-.uptime { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.uptime { color: var(--muted); font-size: 14px; white-space: nowrap; }
 
 /* gauge row: CPU (turbine) · GPU hero · MEM · thermo+power */
 
@@ -173,15 +173,15 @@ header h1 { font-size: 20px; font-weight: 600; }
 .gauge {
   position: relative;
   flex: 0 1 auto;
-  width: min(100%, 224px);
+  width: min(100%, 248px);
   border-radius: 10px;
 }
 
-.gauge.hero { width: min(100%, 252px); }
+.gauge.hero { width: min(100%, 288px); }
 
 .gauge svg { display: block; width: 100%; height: auto; }
 
-.gauge:focus-visible, .recorder:focus-visible, .thermo:focus-visible {
+.gauge:focus-visible, .thermo:focus-visible {
   outline: 1px solid var(--muted);
   outline-offset: 3px;
 }
@@ -200,23 +200,23 @@ header h1 { font-size: 20px; font-weight: 600; }
 }
 
 .glabel {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: .1em;
   color: var(--muted);
 }
 
 .gval {
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;
 }
 
-.hero .gval { font-size: 42px; }
+.hero .gval { font-size: 48px; }
 
 .gcap {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   max-width: 100%;
   white-space: nowrap;
@@ -270,21 +270,21 @@ header h1 { font-size: 20px; font-weight: 600; }
 }
 
 .side .lbl {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: .1em;
   color: var(--muted);
 }
 
 .side .val {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.side .sub { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.side .sub { font-size: 15px; color: var(--ink-2); white-space: nowrap; }
 
-.side .cap { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.side .cap { font-size: 14px; color: var(--muted); white-space: nowrap; }
 
 .val.sev-warn     { color: var(--warn); }
 .val.sev-serious  { color: var(--serious); }
@@ -328,7 +328,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   position: absolute;
   left: 22px;
   top: -6px;
-  font: 500 11px/1 system-ui, sans-serif;
+  font: 500 13px/1 system-ui, sans-serif;
   font-style: normal;
   color: var(--muted);
 }
@@ -347,7 +347,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   position: absolute;
   right: 10px;
   top: -4px;
-  font: 500 12px/1 system-ui, sans-serif;
+  font: 500 14px/1 system-ui, sans-serif;
   font-style: normal;
   color: var(--ink-2);
   white-space: nowrap;
@@ -356,50 +356,6 @@ header h1 { font-size: 20px; font-weight: 600; }
 .thermo .socmark.sev-warn     { background: var(--warn); }
 .thermo .socmark.sev-serious  { background: var(--serious); }
 .thermo .socmark.sev-critical { background: var(--critical); }
-
-/* recorder strip: 10-minute small-multiple lanes, one per metric */
-
-.recorder { position: relative; min-width: 0; padding-top: 6px; }
-
-.recwrap { position: relative; }
-
-.recorder svg { display: block; width: 100%; height: 104px; }
-
-.recorder .baseline { stroke: var(--grid); stroke-width: 1; }
-
-.recorder .series {
-  fill: none;
-  stroke: var(--hue);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.recorder .cross {
-  stroke: var(--muted);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-  visibility: hidden;
-}
-
-.lane-labels { position: absolute; inset: 0; pointer-events: none; }
-
-.lane-labels span {
-  position: absolute;
-  left: 10px;
-  transform: translateY(-50%);
-  font: 500 12px/1 system-ui, sans-serif;
-  color: var(--muted);
-  letter-spacing: .08em;
-}
-
-.rec-cap {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--muted);
-  text-align: right;
-}
 
 /* ---------- tooltip ---------- */
 
@@ -411,7 +367,7 @@ header h1 { font-size: 20px; font-weight: 600; }
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px 11px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--ink-2);
   pointer-events: none;
@@ -433,7 +389,7 @@ header h1 { font-size: 20px; font-weight: 600; }
 #tableview caption {
   text-align: left;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   padding: 2px 4px 10px;
 }
 
@@ -445,7 +401,7 @@ header h1 { font-size: 20px; font-weight: 600; }
 }
 
 #tableview th {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: .09em;
   color: var(--muted);
