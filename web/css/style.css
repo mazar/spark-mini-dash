@@ -1,5 +1,5 @@
-/* spark-mini-dash — cockpit cluster: one instrument panel per node.
-   Design tokens (dataviz-validated on the dark surface #1a1a19). */
+/* spark-mini-dash — two-half layout: metric strips (left) + PAIR request
+   flow (right). Design tokens (dataviz-validated on the dark surface #1a1a19). */
 
 :root {
   --page: #0d0d0d;           /* page plane */
@@ -99,11 +99,21 @@ header h1 { font-size: 22px; font-weight: 600; }
   margin-left: 2px;
 }
 
-/* ---------- panels: one instrument cluster per node, side by side ---------- */
+/* ---------- stage: metrics (left) + flow (right) ---------- */
 
-#panels {
+#stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+/* ---------- left: one metric-strip panel per node ---------- */
+
+#metrics {
   display: grid;
   gap: 14px;
+  align-content: start;
   min-height: 0;
 }
 
@@ -112,12 +122,11 @@ header h1 { font-size: 22px; font-weight: 600; }
   border: 1px solid var(--line);
   border-left: 3px solid var(--hue, #3987e5);
   border-radius: 12px;
-  padding: 14px 20px 12px;
+  padding: 12px 18px;
   display: grid;
-  grid-template-rows: auto 1fr;
   gap: 10px;
   min-width: 0;
-  min-height: 0;
+  align-content: start;
   transition: opacity .5s;
 }
 
@@ -157,205 +166,189 @@ header h1 { font-size: 22px; font-weight: 600; }
 .chip.warn { color: var(--warn); }
 .chip.crit { color: var(--critical); }
 
-.uptime { color: var(--muted); font-size: 14px; white-space: nowrap; }
+.uptime { color: var(--muted); font-size: 14px; white-space: nowrap; margin-left: auto; }
 
-/* gauge row: CPU (turbine) · GPU hero · MEM · thermo+power */
+/* meters: one horizontal ratio bar per resource */
 
-.gaugerow {
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  gap: 12px;
-  min-height: 0;
-  min-width: 0;
-}
+.meters { display: grid; gap: 14px; }
 
-.gauge {
-  position: relative;
-  flex: 0 1 auto;
-  width: min(100%, 248px);
-  border-radius: 10px;
-}
+.meter { min-width: 0; }
 
-.gauge.hero { width: min(100%, 288px); }
-
-.gauge svg { display: block; width: 100%; height: auto; }
-
-.gauge:focus-visible, .thermo:focus-visible {
+.meter:focus-visible, .tile:focus-visible {
   outline: 1px solid var(--muted);
   outline-offset: 3px;
 }
 
-/* center readout, overlaid on the arc */
-
-.gcenter {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  text-align: center;
-  pointer-events: none;
-  padding: 0 22%;
+.mhead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
-.glabel {
+.mlabel {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: .1em;
   color: var(--muted);
 }
 
-.gval {
-  font-size: 34px;
+.mval {
+  margin-left: auto;
+  font-size: 19px;
   font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-.hero .gval { font-size: 48px; }
+.mbar {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--hue) 22%, var(--surface));
+  overflow: hidden;
+}
 
-.gcap {
-  font-size: 14px;
+.mfill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  border-radius: 5px;
+  background: var(--hue);
+  transition: width .8s ease;
+}
+
+.mfill.sev-warn     { background: var(--warn); }
+.mfill.sev-serious  { background: var(--serious); }
+.mfill.sev-critical { background: var(--critical); }
+
+.mcap {
+  margin-top: 3px;
+  font-size: 13px;
   color: var(--muted);
-  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* arcs — meter fill carries the node hue; the unfilled track is a lighter
-   step of the same ramp, so state reads across the whole arc */
+/* per-core strip: one thin segment per logical core, length of the row */
 
-.arc-track {
-  fill: none;
-  stroke: color-mix(in srgb, var(--hue) 22%, var(--surface));
-  stroke-width: 12;
-  stroke-linecap: round;
+.corestrip {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+  margin-top: 5px;
 }
 
-.arc-val {
-  fill: none;
-  stroke: var(--hue);
-  stroke-width: 12;
-  stroke-linecap: round;
-  /* no transition on stroke-dasharray: interpolating dashes with round
-     caps flickers cap-dot artifacts at the arc ends */
+.corestrip i {
+  flex: 1 1 0;
+  min-width: 1px;
+  border-radius: 2px;
+  background: var(--raise);
 }
 
-.hero .arc-track, .hero .arc-val { stroke-width: 14; }
+/* sequential single-hue steps for the per-core strip (matches fan shades) */
 
-.arc-val.sev-warn     { stroke: var(--warn); }
-.arc-val.sev-serious  { stroke: var(--serious); }
-.arc-val.sev-critical { stroke: var(--critical); }
+.corestrip i.c0 { background: color-mix(in srgb, var(--hue) 25%, var(--surface)); }
+.corestrip i.c1 { background: color-mix(in srgb, var(--hue) 50%, var(--surface)); }
+.corestrip i.c2 { background: color-mix(in srgb, var(--hue) 75%, var(--surface)); }
+.corestrip i.c3 { background: var(--hue); }
 
-/* per-core turbine ring (CPU): radial ticks, length + shade encode load */
+/* temp / power stat tiles */
 
-.fan line { stroke-width: 5; stroke-linecap: round; }
-
-.fan .h1 { stroke: color-mix(in srgb, var(--hue) 25%, var(--surface)); }
-.fan .h2 { stroke: color-mix(in srgb, var(--hue) 50%, var(--surface)); }
-.fan .h3 { stroke: color-mix(in srgb, var(--hue) 75%, var(--surface)); }
-.fan .h4 { stroke: var(--hue); }
-
-.fan .hit { stroke: transparent; stroke-width: 18; pointer-events: stroke; }
-
-/* right column: thermometer + power */
-
-.side {
-  flex: 0 0 auto;
+.tiles {
   display: grid;
-  gap: 10px;
-  align-content: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
-.side .lbl {
+.tile { min-width: 0; }
+
+.tlbl {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: .1em;
   color: var(--muted);
 }
 
-.side .val {
-  font-size: 30px;
+.tval {
+  font-size: 24px;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
-.side .sub { font-size: 15px; color: var(--ink-2); white-space: nowrap; }
+.tsub { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 
-.side .cap { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.tcap { font-size: 13px; color: var(--muted); white-space: nowrap; }
 
-.val.sev-warn     { color: var(--warn); }
-.val.sev-serious  { color: var(--serious); }
-.val.sev-critical { color: var(--critical); }
-.sub.sev-warn     { color: var(--warn); }
-.sub.sev-serious  { color: var(--serious); }
-.sub.sev-critical { color: var(--critical); }
+.tval.sev-warn,     .tsub.sev-warn     { color: var(--warn); }
+.tval.sev-serious,  .tsub.sev-serious  { color: var(--serious); }
+.tval.sev-critical, .tsub.sev-critical { color: var(--critical); }
 
-.thermo { position: relative; width: 15px; height: 110px; margin: 4px 0 2px 58px; }
+/* ---------- right: PAIR request flow ---------- */
 
-.thermo .track {
-  position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--hue) 22%, var(--surface));
+#flow {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.thermo .mercury {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 8px;
-  background: var(--hue);
-  transition: height .8s ease;
+#pair-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px 8px;
+  border-bottom: 1px solid var(--line);
 }
 
-.thermo .mercury.sev-warn     { background: var(--warn); }
-.thermo .mercury.sev-serious  { background: var(--serious); }
-.thermo .mercury.sev-critical { background: var(--critical); }
+#pair-head h2 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
 
-.thermo .tick {
-  position: absolute;
-  left: -4px;
-  right: -4px;
-  height: 1px;
+#pair-status { margin-left: auto; font-size: 14px; color: var(--muted); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+#pair-status .live { color: var(--good); font-weight: 600; }
+
+#pair-status form { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+
+#pair-status input {
+  width: 7ch;
   background: var(--raise);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: 600 16px/1 system-ui, sans-serif;
+  letter-spacing: .18em;
+  padding: 5px 8px;
+  font-variant-numeric: tabular-nums;
 }
 
-.thermo .tick i {
-  position: absolute;
-  left: 22px;
-  top: -6px;
-  font: 500 13px/1 system-ui, sans-serif;
-  font-style: normal;
-  color: var(--muted);
+#pair-status button {
+  background: var(--raise);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: 600 14px/1 system-ui, sans-serif;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
-.thermo .socmark {
-  position: absolute;
-  left: -9px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ink-2);
-  transform: translateY(-2px);
-}
+#pair-status button:hover { border-color: var(--muted); }
 
-.thermo .socmark i {
-  position: absolute;
-  right: 10px;
-  top: -4px;
-  font: 500 14px/1 system-ui, sans-serif;
-  font-style: normal;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
+/* flow canvas fills the middle; nodes + particles drawn on it */
 
-.thermo .socmark.sev-warn     { background: var(--warn); }
-.thermo .socmark.sev-serious  { background: var(--serious); }
-.thermo .socmark.sev-critical { background: var(--critical); }
+#flow-viz { position: relative; min-height: 0; }
+
+#flow-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* ---------- tooltip ---------- */
 
@@ -413,6 +406,12 @@ header h1 { font-size: 22px; font-weight: 600; }
 
 #tableview .chip { display: inline-flex; }
 
+/* genuinely narrow windows stack; the 1920x480 wall bar stays side-by-side */
+
+@media (max-width: 1100px) {
+  #stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .arc-val, .thermo .mercury { transition: none; }
+  .mfill { transition: none; }
 }
