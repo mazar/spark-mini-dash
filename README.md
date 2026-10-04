@@ -1,11 +1,10 @@
 # spark-mini-dash
 
-A compact wall dashboard for a cluster of NVIDIA DGX Spark machines: CPU,
-GPU, and unified-memory utilization plus temperatures and power, rendered as
-one instrument panel per node — circular gauges, a per-core turbine ring, a
-thermometer, and a 10-minute recorder strip (inspired by the Resource Monitor
-built into [NVIDIA Sync](https://docs.nvidia.com/sync/latest/resource-monitor.html))
-and sized for a **1920x480** display.
+A compact wall dashboard for a cluster of NVIDIA DGX Spark machines. Two
+halves: **node metric strips** (CPU/GPU/unified-memory meters, per-core load
+strip, temperature and power tiles) and — optionally — a live **PAIR request
+flow** view showing where a [NVIDIA Personal AI Router](https://github.com/NVIDIA/Personal-AI-Router)
+cluster is executing inference jobs right now.
 
 ```
 ┌────────────┐  HTTP /metrics   ┌──────────────────┐   dashboard stream    ┌──────────────────────┐
@@ -28,7 +27,33 @@ cross-compiled for `linux/arm64` (DGX Spark, Raspberry Pi Ubuntu),
   on the request path, so any number of dashboards can poll it.
 - **`spark-dash`** — polls every node in parallel (1.5s timeout), keeps a
   10-minute history ring per metric (survives page reloads), and serves the
-  embedded UI plus `/api/state`.
+  embedded UI plus `/api/state`. With `--pair-enabled` it additionally runs a
+  **read-only PAIR bridge** (below).
+
+## PAIR bridge (live request flow)
+
+`spark-dash --pair-enabled` joins a PAIR cluster as a **passive, read-only
+member** to receive real-time workload lifecycle events — which node a
+request came from, which node is executing it, and whether it is queued or
+running. It never invites, removes, submits, cancels, or manages anything:
+the PAIR components (`nvpair-cluster-manager`, `nvpair-node-scanner`,
+`nvpair-workload-manager`, built from the Apache-2.0 PAIR source into the
+deb at `/usr/lib/spark-mini-dash/pair/`) run as supervised children solely
+so membership + mTLS exist and events can be received.
+
+Joining is one PIN exchange:
+
+1. Start spark-dash with `--pair-enabled` (ports default to `14331`
+   cluster / `14330` workload so they never clash with a real PAIR app on
+   the same host; override with `--pair-cluster-port` / `--pair-workload-port`).
+2. From any existing member's PAIR GUI, invite the dashboard node (its
+   address is `<host>:14331`).
+3. The dashboard shows a PIN prompt — type the six digits shown on the
+   inviting node. Membership and trust fan out automatically.
+
+Set `--pair-state-dir` (default `/var/lib/spark-mini-dash/pair`) somewhere
+persistent: the node identity and cluster trust live there. Open both ports
+in the firewall if the cluster spans hosts.
 
 ## Cluster setup (Ubuntu, end to end)
 

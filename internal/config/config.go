@@ -35,6 +35,17 @@ var DefaultNodeColors = []string{
 	"#d55181", // magenta
 }
 
+// PairConfig tunes the read-only PAIR bridge (internal/pairbridge): spark-dash
+// joins a PAIR cluster as a passive member to receive live workload lifecycle
+// events. Defaults avoid the ports the real PAIR app occupies (14321/14320).
+type PairConfig struct {
+	Enabled      bool   `json:"enabled"`
+	BinariesDir  string `json:"binaries_dir"`
+	StateDir     string `json:"state_dir"`
+	ClusterPort  int    `json:"cluster_port"`
+	WorkloadPort int    `json:"workload_port"`
+}
+
 // Config is the full dashboard configuration.
 type Config struct {
 	Addr           string     `json:"addr"`
@@ -47,6 +58,7 @@ type Config struct {
 	Nodes          []NodeCfg  `json:"nodes"`
 	NodeColors     []string   `json:"node_colors"`
 	Thresholds     Thresholds `json:"thresholds"`
+	Pair           PairConfig `json:"pair"`
 }
 
 // NodeCfg is a node entry in the config file.
@@ -79,6 +91,13 @@ func Defaults() *Config {
 			MemCritPct: 99,
 		},
 		Nodes: []NodeCfg{{URL: "http://127.0.0.1:9105"}}, // default: local agent
+		Pair: PairConfig{
+			Enabled:      false,
+			BinariesDir:  "/usr/lib/spark-mini-dash/pair",
+			StateDir:     "/var/lib/spark-mini-dash/pair",
+			ClusterPort:  14331,
+			WorkloadPort: 14330,
+		},
 	}
 }
 
@@ -93,6 +112,11 @@ func Load(args []string) (*Config, error) {
 	nodesFlag := fs.String("nodes", "", "comma-separated name=URL list (overrides file nodes), e.g. spark-1=http://10.0.0.11:9105,spark-2=http://10.0.0.12:9105")
 	historyLen := fs.Int("history-len", 0, "history points kept per metric (0 = default)")
 	pollMS := fs.Int("poll-ms", 0, "poll interval in ms (0 = default)")
+	pairEnabled := fs.Bool("pair-enabled", false, "join a PAIR cluster as a passive, read-only member (needs the nvpair-* child binaries)")
+	pairBinaries := fs.String("pair-binaries-dir", "", "dir holding nvpair-cluster-manager, nvpair-node-scanner, nvpair-workload-manager")
+	pairState := fs.String("pair-state-dir", "", "bridge state dir (node identity + cluster trust)")
+	pairClusterPort := fs.Int("pair-cluster-port", 0, "bridge cluster-manager inter-node port (avoid the real PAIR app's 14321)")
+	pairWorkloadPort := fs.Int("pair-workload-port", 0, "bridge workload-manager inter-node port (avoid the real PAIR app's 14320)")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -138,6 +162,22 @@ func Load(args []string) (*Config, error) {
 
 	if *nodesFlag != "" {
 		cfg.Nodes = parseNodes(*nodesFlag)
+	}
+	// PAIR flags (booleans can only enable; ports/paths override when set)
+	if *pairEnabled {
+		cfg.Pair.Enabled = true
+	}
+	if *pairBinaries != "" {
+		cfg.Pair.BinariesDir = *pairBinaries
+	}
+	if *pairState != "" {
+		cfg.Pair.StateDir = *pairState
+	}
+	if *pairClusterPort > 0 {
+		cfg.Pair.ClusterPort = *pairClusterPort
+	}
+	if *pairWorkloadPort > 0 {
+		cfg.Pair.WorkloadPort = *pairWorkloadPort
 	}
 	if len(cfg.NodeColors) == 0 {
 		cfg.NodeColors = DefaultNodeColors

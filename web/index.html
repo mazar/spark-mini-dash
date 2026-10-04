@@ -18,7 +18,18 @@
   </div>
 </header>
 
-<main id="panels" aria-label="Node instrument panels"></main>
+<main id="stage">
+  <section id="metrics" aria-label="Node metric strips"></section>
+  <section id="flow" aria-label="PAIR request flow">
+    <div id="pair-head">
+      <h2>Request flow</h2>
+      <div id="pair-status" role="status"></div>
+    </div>
+    <div id="flow-viz">
+      <canvas id="flow-canvas"></canvas>
+    </div>
+  </section>
+</main>
 
 <section id="tableview" hidden aria-label="Node table view">
   <table>

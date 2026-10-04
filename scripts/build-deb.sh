@@ -26,6 +26,18 @@ WORK="dist/deb-staging/$PKG-$ARCH"
 rm -rf "$WORK"
 mkdir -p "$WORK/DEBIAN" "$WORK/usr/bin" "$WORK/lib/systemd/system"
 
+# The spark-dash deb optionally ships the three PAIR children (read-only
+# bridge) built from the PAIR source checkout. Apache-2.0; see README.
+PAIR_SRC=${PAIR_SRC:-$HOME/repo/Personal-AI-Router}
+if [ "$PKG" = spark-dash ] && [ -d "$PAIR_SRC/services" ]; then
+    echo ">> bundling PAIR children from $PAIR_SRC"
+    mkdir -p "$WORK/usr/lib/spark-mini-dash/pair"
+    for svc in nvpair-cluster-manager nvpair-node-scanner nvpair-workload-manager; do
+        CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -C "$PAIR_SRC/services/$svc" \
+            -trimpath -ldflags "-s -w" -o "$WORK/usr/lib/spark-mini-dash/pair/$svc" .
+    done
+fi
+
 LDFLAGS="-s -w -X spark-mini-dash/internal/version.Version=$VERSION"
 CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -trimpath -ldflags "$LDFLAGS" \
     -o "$WORK/usr/bin/$PKG" "./cmd/$PKG"

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"spark-mini-dash/internal/config"
+	"spark-mini-dash/internal/pairbridge"
 	"spark-mini-dash/internal/poller"
 	"spark-mini-dash/internal/version"
 	"spark-mini-dash/web"
@@ -42,6 +43,26 @@ func main() {
 	}
 	log.Printf("spark-dash %s on %s — polling %d node(s) every %s", version.Version, cfg.Addr, len(nodes), interval)
 
+	// Optional read-only PAIR bridge: join the cluster as a passive member to
+	// display live request routing. It never controls anything.
+	var bridge *pairbridge.Bridge
+	if cfg.Pair.Enabled {
+		bridge = pairbridge.New(pairbridge.Config{
+			BinariesDir:  cfg.Pair.BinariesDir,
+			StateDir:     cfg.Pair.StateDir,
+			ClusterPort:  cfg.Pair.ClusterPort,
+			WorkloadPort: cfg.Pair.WorkloadPort,
+		})
+		go func() {
+			if err := bridge.Run(ctx); err != nil {
+				log.Printf("pair bridge: %v", err)
+			}
+		}()
+		log.Printf("pair bridge enabled — cluster :%d, workload :%d, state %s",
+			cfg.Pair.ClusterPort, cfg.Pair.WorkloadPort, cfg.Pair.StateDir)
+		defer bridge.Stop()
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle("/", web.Handler())
 	mux.HandleFunc("GET /api/state", func(w http.ResponseWriter, _ *http.Request) {
@@ -50,6 +71,7 @@ func main() {
 			Now    string             `json:"now"`
 			Config outConfig          `json:"config"`
 			Nodes  []poller.NodeState `json:"nodes"`
+			Pair   *pairbridge.State  `json:"pair,omitempty"`
 		}{
 			Schema: 1,
 			Now:    time.Now().UTC().Format(time.RFC3339),
@@ -63,8 +85,32 @@ func main() {
 		for _, n := range nodes {
 			st.Nodes = append(st.Nodes, n.State())
 		}
+		if bridge != nil {
+			s := bridge.Snapshot()
+			st.Pair = &s
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(st)
+	})
+	mux.HandleFunc("POST /api/pair/respond", func(w http.ResponseWriter, r *http.Request) {
+		if bridge == nil {
+			http.Error(w, "pair bridge not enabled", http.StatusConflict)
+			return
+		}
+		var req struct {
+			InviteID string `json:"inviteId"`
+			Pin      string `json:"pin"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Pin == "" {
+			http.Error(w, "expected {inviteId, pin}", http.StatusBadRequest)
+			return
+		}
+		if err := bridge.RespondToInvite(r.Context(), req.Pin); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
