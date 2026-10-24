@@ -487,12 +487,13 @@ const Flow = (() => {
 
 /* ---------- pairing status DOM ---------- */
 
-// Config is fixed per dash process; decide once on the first state. False
-// removes the flow view entirely — metric strips take the full width.
+// Config is fixed per dash process; decide once on the first state. The flow
+// view is strictly opt-in (pair.show_flow === true) — default is metrics-only
+// across the full width.
 let flowShown = null;
 
 function applyFlowVisibility(s) {
-  const show = !(s.config && s.config.show_flow === false);
+  const show = !!(s.config && s.config.show_flow === true);
   if (flowShown === show) return;
   flowShown = show;
   $("#flow").hidden = !show;
