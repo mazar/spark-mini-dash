@@ -5,6 +5,9 @@
   "stale_after_s": 3,
   "offline_after_s": 15,
   "soc_label": "SoC",
+  "pair": {
+    "show_flow": true
+  },
   "thresholds": {
     "gpu_temp_warn_c": 80,
     "gpu_temp_serious_c": 90,

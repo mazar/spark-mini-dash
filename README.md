@@ -55,6 +55,16 @@ Set `--pair-state-dir` (default `/var/lib/spark-mini-dash/pair`) somewhere
 persistent: the node identity and cluster trust live there. Open both ports
 in the firewall if the cluster spans hosts.
 
+**Turning the flow view off.** Without `--pair-enabled` the right half shows
+a quiet "bridge disabled" notice. To reclaim the space for metrics entirely,
+set `"show_flow": false` in the config file's `pair` section — the request-flow
+view is removed and the metric strips take the full width, fanning into
+columns as pods join the cluster:
+
+```json
+"pair": { "show_flow": false }
+```
+
 ## Cluster setup (Ubuntu, end to end)
 
 This walkthrough sets up two nodes, `spark-5a4e` and `spark-8a27`, with the

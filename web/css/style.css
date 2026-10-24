@@ -108,6 +108,17 @@ header h1 { font-size: 22px; font-weight: 600; }
   min-height: 0;
 }
 
+/* pair.show_flow=false: metrics-only stage — strips fan into columns and
+   every added pod fills the new space (auto-fit collapses extra tracks) */
+#stage.no-flow {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#stage.no-flow #metrics {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  align-content: start;
+}
+
 /* ---------- left: one metric-strip panel per node ---------- */
 
 #metrics {
@@ -409,7 +420,7 @@ header h1 { font-size: 22px; font-weight: 600; }
 /* genuinely narrow windows stack; the 1920x480 wall bar stays side-by-side */
 
 @media (max-width: 1100px) {
-  #stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr); }
+  #stage:not(.no-flow) { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
