@@ -229,7 +229,7 @@ func (c *Config) validate() error {
 		return fmt.Errorf("history_len %d out of range [10,3600]", c.HistoryLen)
 	}
 	if c.TimeoutMS < 200 || c.TimeoutMS >= c.PollIntervalMS {
-		return fmt.Errorf("timeout_ms %d must be in [200, poll_interval_ms)", c.TimeoutMS)
+		return fmt.Errorf("timeout_ms %d must be >= 200 and less than poll_interval_ms %d", c.TimeoutMS, c.PollIntervalMS)
 	}
 	if c.StaleAfterS <= 0 || c.OfflineAfterS <= c.StaleAfterS {
 		return fmt.Errorf("stale_after_s/offline_after_s must satisfy 0 < stale < offline")
