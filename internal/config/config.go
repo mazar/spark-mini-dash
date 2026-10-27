@@ -40,6 +40,7 @@ var DefaultNodeColors = []string{
 // events. Defaults avoid the ports the real PAIR app occupies (14321/14320).
 type PairConfig struct {
 	Enabled      bool   `json:"enabled"`
+	ShowFlow     bool   `json:"show_flow"` // opt-in: true renders the request-flow view; false (default) keeps metrics full-width
 	BinariesDir  string `json:"binaries_dir"`
 	StateDir     string `json:"state_dir"`
 	ClusterPort  int    `json:"cluster_port"`
@@ -92,7 +93,10 @@ func Defaults() *Config {
 		},
 		Nodes: []NodeCfg{{URL: "http://127.0.0.1:9105"}}, // default: local agent
 		Pair: PairConfig{
+			// PAIR is entirely opt-in: the bridge is off and the flow view is
+			// hidden by default. Enable both in the config file.
 			Enabled:      false,
+			ShowFlow:     false,
 			BinariesDir:  "/usr/lib/spark-mini-dash/pair",
 			StateDir:     "/var/lib/spark-mini-dash/pair",
 			ClusterPort:  14331,
@@ -225,7 +229,7 @@ func (c *Config) validate() error {
 		return fmt.Errorf("history_len %d out of range [10,3600]", c.HistoryLen)
 	}
 	if c.TimeoutMS < 200 || c.TimeoutMS >= c.PollIntervalMS {
-		return fmt.Errorf("timeout_ms %d must be in [200, poll_interval_ms)", c.TimeoutMS)
+		return fmt.Errorf("timeout_ms %d must be >= 200 and less than poll_interval_ms %d", c.TimeoutMS, c.PollIntervalMS)
 	}
 	if c.StaleAfterS <= 0 || c.OfflineAfterS <= c.StaleAfterS {
 		return fmt.Errorf("stale_after_s/offline_after_s must satisfy 0 < stale < offline")

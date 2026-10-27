@@ -79,6 +79,7 @@ func main() {
 				PollIntervalMS: cfg.PollIntervalMS,
 				HistoryLen:     cfg.HistoryLen,
 				SocLabel:       cfg.SocLabel,
+				ShowFlow:       cfg.Pair.ShowFlow,
 				Thresholds:     cfg.Thresholds,
 			},
 		}
@@ -131,5 +132,6 @@ type outConfig struct {
 	PollIntervalMS int               `json:"poll_interval_ms"`
 	HistoryLen     int               `json:"history_len"`
 	SocLabel       string            `json:"soc_label"`
+	ShowFlow       bool              `json:"show_flow"`
 	Thresholds     config.Thresholds `json:"thresholds"`
 }

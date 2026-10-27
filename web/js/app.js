@@ -487,7 +487,21 @@ const Flow = (() => {
 
 /* ---------- pairing status DOM ---------- */
 
+// Config is fixed per dash process; decide once on the first state. The flow
+// view is strictly opt-in (pair.show_flow === true) — default is metrics-only
+// across the full width.
+let flowShown = null;
+
+function applyFlowVisibility(s) {
+  const show = !!(s.config && s.config.show_flow === true);
+  if (flowShown === show) return;
+  flowShown = show;
+  $("#flow").hidden = !show;
+  $("#stage").classList.toggle("no-flow", !show);
+}
+
 function renderPair(pair) {
+  if (flowShown === false) return; // section removed by config; no canvas loop
   const statusEl = $("#pair-status");
   Flow.setData(pair);
 
@@ -613,6 +627,7 @@ async function tick() {
     const s = await res.json();
     lastState = s;
     updateHeader(s);
+    applyFlowVisibility(s);
     if (!tableOn) {
       render(s);
       renderPair(s.pair || { status: "off" });

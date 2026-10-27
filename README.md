@@ -55,6 +55,15 @@ Set `--pair-state-dir` (default `/var/lib/spark-mini-dash/pair`) somewhere
 persistent: the node identity and cluster trust live there. Open both ports
 in the firewall if the cluster spans hosts.
 
+**PAIR display is off by default.** The request-flow view (and the bridge
+itself) only appear when explicitly enabled: `"pair": { "enabled": true,
+"show_flow": true }`. With `show_flow` false (the default) the metric strips
+take the full width, fanning into columns as pods join the cluster:
+
+```json
+"pair": { "show_flow": true }
+```
+
 ## Cluster setup (Ubuntu, end to end)
 
 This walkthrough sets up two nodes, `spark-5a4e` and `spark-8a27`, with the
@@ -143,6 +152,19 @@ dashboard host, use the node's IP instead. (mDNS names can be checked with
 A node entry needs only `url` — the display name then comes from the
 agent's hostname. `name`, and `color` (hex) are optional overrides.
 
+**Config constraints** (checked at startup; `spark-dash` exits with an
+explicit error and systemd restarts it until it succeeds):
+
+- `poll_interval_ms` must be in `[500, 60000]` — the value is in **milliseconds**
+  (2000 = 2 s), not seconds.
+- `timeout_ms` must be `>= 200` and **strictly less than `poll_interval_ms`**.
+  The default timeout is 1500 ms, so setting `poll_interval_ms` to anything
+  `<= 1500` requires lowering `timeout_ms` in the same edit. Changing only
+  `poll_interval_ms` to 2000 is fine — 1500 < 2000.
+- `history_len` in `[10, 3600]`; `0 < stale_after_s < offline_after_s`.
+- The file must be valid JSON (no trailing comma after the last key).
+  On failure, `journalctl -u spark-dash -n 5` names the exact problem.
+
 ### 5. Put it on the wall (kiosk)
 
 ```sh
@@ -168,13 +190,13 @@ sudo apt purge spark-dash                          # also removes /etc config
 
 | Element | Source | Notes |
 |---|---|---|
-| CPU gauge + per-core turbine ring | `/proc/stat` (delta vs previous tick) | 20 radial ticks around the gauge — angle is the core index, length and shade encode load; hover a tick for the per-core value |
-| MEMORY gauge, `N / M GB` | unified pool: DGX stream or `/proc/meminfo` | `used = total − available` (reclaimable cache counted) — a healthy GB10 idles near ~96%; the value stays white on purpose and only the arc tints near exhaustion (97%/99% defaults). Swap shown in the tooltip, never folded in |
-| GPU gauge (hero, center) | DGX Dashboard stream or `nvidia-smi` | The % is the headline read; GPU memory is never shown — GB10 unified memory makes every GPU-memory query report Not Supported |
-| TEMP thermometer | `nvidia-smi` GPU temp + "SoC" max of the unlabeled `acpitz` zones | labeled ticks at the warn/serious/critical thresholds; mercury and value turn yellow/orange/red past them |
-| POWER | `power.draw` | current draw plus the 10-minute peak |
-| Recorder strip | dashboard history rings | 10-minute lanes for CPU / GPU / MEM % and GPU temp; hover for a crosshair with values at any point in the window |
+| CPU meter + per-core strip | `/proc/stat` (delta vs previous tick) | horizontal meter with the % and core count; a thin per-core strip under it, one segment per core, shaded by load (hover the panel for details) |
+| MEMORY meter, `N / M GB` | unified pool: DGX stream or `/proc/meminfo` | `used = total − available` (reclaimable cache counted) — a healthy GB10 idles near ~96%; the value stays white on purpose and only the meter fill tints near exhaustion (97%/99% defaults). Swap shown in the tooltip, never folded in |
+| GPU meter | DGX Dashboard stream or `nvidia-smi` | the % plus the GPU name; GPU memory is never shown — GB10 unified memory makes every GPU-memory query report Not Supported |
+| TEMP tile | `nvidia-smi` GPU temp + "SoC" max of the unlabeled `acpitz` zones | value turns yellow/orange/red past the configured thresholds; SoC shown beneath |
+| POWER tile | `power.draw` | current draw plus the 10-minute peak |
 | Table view | all of the above | press `T` (or open `/#table`) for the WCAG-clean twin |
+| Request-flow panel (opt-in) | PAIR bridge | right half when `pair.show_flow` is true; hidden by default |
 
 **Units:** decimal GB everywhere (kiB×1024/1e9), matching NVIDIA Sync's
 "125 GB of 131 GB" display. The total shows ~131 GB, not 128 — that is the
@@ -266,9 +288,9 @@ it once and keeps serving via nvidia-smi; check `journalctl -u spark-agent`.
 
 - The agent samples on its own clock and serves a cached snapshot — pollers
   never distort the CPU delta windows; multiple dashboards can share a node.
-- History rings append every tick including failures, so the recorder lanes
-  show gaps, never fake zeros. History lives in the dashboard (10 min), not on
-  the nodes, and survives page reloads but not dashboard restarts.
+- History rings append every tick including failures, so peaks and gaps
+  reflect reality, never fake zeros. History lives in the dashboard (10 min),
+  not on the nodes, and survives page reloads but not dashboard restarts.
 - Node colors follow the node (validated CVD-safe order, configurable
   via `node_colors`); status/temperature colors are reserved for status only.
 - Agent flags: `--mock` (synthetic data for GPU-less demo hosts),
